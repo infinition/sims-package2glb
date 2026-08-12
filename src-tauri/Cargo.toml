@@ -1,0 +1,36 @@
+[package]
+name = "sims-package2glb"
+version = "0.1.0"
+description = "Extract Sims 3 / Sims 4 .package objects to glTF"
+authors = ["Fabien Polly"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "sims_package2glb_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+flate2 = "1"
+png = "0.17"
+base64 = "0.22"
+rayon = "1"
+
+# Dropping files on the executable is a console-less run that still has
+# something to say when it was started from a terminal.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = ["Win32_System_Console"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

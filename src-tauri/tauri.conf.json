@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "sims-package2glb",
+  "version": "0.1.0",
+  "identifier": "com.infinition.simspackage2glb",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5184",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "sims-package2glb",
+        "width": 1320,
+        "height": 860,
+        "minWidth": 940,
+        "minHeight": 600,
+        "dragDropEnabled": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; img-src 'self' data: blob:; connect-src 'self' ipc: http://ipc.localhost data: blob:; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico"],
+    "fileAssociations": [
+      {
+        "ext": ["package"],
+        "name": "SimsPackage",
+        "description": "Package The Sims 3 / 4",
+        "role": "Editor"
+      }
+    ]
+  }
+}
