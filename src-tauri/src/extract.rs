@@ -45,13 +45,89 @@ pub struct Model {
     pub meshes: Vec<Mesh>,
 }
 
+/// The diffuse a Sims 2 material uses, from its `stdMatBaseTextureName`
+/// property. The value is a full name, often prefixed `##0x<group>!`.
+fn matd_diffuse_name(data: &[u8]) -> Option<String> {
+    const NEEDLE: &[u8] = b"stdMatBaseTextureName";
+    let idx = data.windows(NEEDLE.len()).position(|w| w == NEEDLE)?;
+    let at = idx + NEEDLE.len();
+    let length = *data.get(at)? as usize;
+    let value = data.get(at + 1..at + 1 + length)?;
+    Some(String::from_utf8_lossy(value).into_owned())
+}
+
+/// The textures a Sims 2 package actually wears, as (material texture name,
+/// texture instance) pairs, resolved through the materials that name them.
+fn sims2_diffuses(package: &Package) -> Vec<(String, u64)> {
+    let mut textures: Vec<(String, u64)> = Vec::new();
+    for resource in package
+        .resources
+        .iter()
+        .filter(|r| r.kind == dbpf::TYPE_TXTR)
+    {
+        if let Some(name) = texture::sims2_name(&resource.data) {
+            let base = name.strip_suffix("_txtr").unwrap_or(&name).to_lowercase();
+            textures.push((base, resource.instance));
+        }
+    }
+    let mut out = Vec::new();
+    for resource in package
+        .resources
+        .iter()
+        .filter(|r| r.kind == dbpf::TYPE_MATD)
+    {
+        let Some(mut name) = matd_diffuse_name(&resource.data) else {
+            continue;
+        };
+        if let Some(bang) = name.find('!') {
+            name = name[bang + 1..].to_string();
+        }
+        let name = name.to_lowercase();
+        if let Some((_, id)) = textures.iter().find(|(n, _)| name.ends_with(n)) {
+            if !out.iter().any(|(_, i)| i == id) {
+                out.push((name, *id));
+            }
+        }
+    }
+    out
+}
+
+/// Dress Sims 2 meshes from their materials. One material applies to every
+/// mesh; with several, a mesh takes the texture whose name ends with its own.
+fn bind_sims2_meshes(meshes: &mut [Mesh], diffuses: &[(String, u64)]) {
+    if diffuses.is_empty() {
+        return;
+    }
+    if diffuses.len() == 1 {
+        let id = diffuses[0].1;
+        for mesh in meshes.iter_mut() {
+            mesh.palette.push(id);
+        }
+        return;
+    }
+    for mesh in meshes.iter_mut() {
+        let name = mesh.name.to_lowercase();
+        if let Some((_, id)) = diffuses
+            .iter()
+            .find(|(n, _)| n.ends_with(&format!("-{name}")) || n.ends_with(&format!("_{name}")))
+        {
+            mesh.palette.push(*id);
+        }
+    }
+}
+
 /// A package may hold one object described several times over: a MODL, and an
 /// MLOD per level of detail, all sharing an instance. Only the densest is worth
 /// keeping.
 fn best_models(package: &Package) -> Vec<Model> {
+    let diffuses = if package.sims2 {
+        sims2_diffuses(package)
+    } else {
+        Vec::new()
+    };
     let mut best: HashMap<u64, (usize, Vec<Mesh>)> = HashMap::new();
     for resource in &package.resources {
-        let meshes = match resource.kind {
+        let mut meshes = match resource.kind {
             TYPE_MODL | TYPE_MLOD => rcol::extract(&resource.data),
             TYPE_GMDC => gmdc::extract(&resource.data),
             _ => continue,
@@ -59,6 +135,7 @@ fn best_models(package: &Package) -> Vec<Model> {
         if meshes.is_empty() {
             continue;
         }
+        bind_sims2_meshes(&mut meshes, &diffuses);
         let score: usize = meshes.iter().map(|m| m.vertices.positions.len()).sum();
         match best.get(&resource.instance) {
             Some((previous, _)) if *previous >= score => {}

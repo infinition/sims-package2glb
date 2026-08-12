@@ -22,6 +22,8 @@ pub const TYPE_DIR: u32 = 0xE86B1EEF;
 pub const TYPE_GMDC: u32 = 0xAC4F8687;
 /// The Sims 2 texture container, holding a `cImageData` object.
 pub const TYPE_TXTR: u32 = 0x1C4A276C;
+/// The Sims 2 material definition, which names the textures it uses.
+pub const TYPE_MATD: u32 = 0x49596978;
 
 const COMP_NONE: u16 = 0x0000;
 const COMP_ZLIB: u16 = 0x5A42;

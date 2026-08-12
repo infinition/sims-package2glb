@@ -177,6 +177,30 @@ pub fn decode_sims2(data: &[u8]) -> Result<Image, String> {
     decode(&sims2_dds(data)?)
 }
 
+/// The file name a Sims 2 texture carries, `_txtr` included. It is what the
+/// materials reference, so it is how a texture is matched to its mesh.
+pub fn sims2_name(data: &[u8]) -> Option<String> {
+    let str_end = |at: usize| -> Option<usize> {
+        let length = *data.get(at)? as usize;
+        let end = at + 1 + length;
+        data.get(end - 1)?;
+        Some(end)
+    };
+    let id = data.get(0x0C..0x10)?;
+    if u32::from_le_bytes([id[0], id[1], id[2], id[3]]) != TYPE_TXTR {
+        return None;
+    }
+    let mut at = 0x10;
+    at = str_end(at)?; // cImageData
+    at += 8; // block id and version
+    at = str_end(at)?; // cSGResource
+    at += 8; // its two leading fields
+    let length = *data.get(at)? as usize;
+    let start = at + 1;
+    let end = start + length;
+    Some(String::from_utf8_lossy(data.get(start..end)?).into_owned())
+}
+
 /// A minimal DDS header, fourcc and one mip level, for the block decoder and
 /// for the files written out on export.
 fn dds_header(width: u32, height: u32, fourcc: &[u8; 4], linear_size: u32) -> Vec<u8> {

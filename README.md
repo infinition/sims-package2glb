@@ -100,7 +100,7 @@ preview or an export, and arranges the answers.
 | `src-tauri/src/rcol.rs` | RCOL container, `MODL`/`MLOD`, geometry and materials |
 | `src-tauri/src/gmdc.rs` | The Sims 2 geometry container |
 | `src-tauri/src/glb.rs` | glTF 2.0 binary writer |
-| `src-tauri/src/extract.rs` | level of detail choice, recolours, assembly |
+| `src-tauri/src/extract.rs` | level of detail choice, recolours, Sims 2 material binding, assembly |
 | `src/viewer.js` | Three.js scene |
 | `src/main.js` | application shell |
 | `src/i18n.js` | English and French wording |
@@ -167,8 +167,10 @@ but a `GMDC`, a flat array of typed elements tied together by data groups and
 carved into named subsets by index groups. Textures live in `cImageData`
 containers: an object header naming the image and its size, then the mipmaps
 smallest to largest, each preceded by its size. The largest mip is wrapped back
-into a DDS to decode. The mesh does not name its texture, so the binding is
-offered by hand, as in Sims 3.
+into a DDS to decode. The materials (`cMaterialDefinition`) name the texture
+each mesh wears, and the mesh subset names line up with those names, so the
+right texture lands on the right part. When a subset has no material in the
+package, the colour picker still offers the rest.
 
 ## Contributing
 
