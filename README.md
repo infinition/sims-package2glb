@@ -39,6 +39,21 @@ plugin.
 | **Three games** | The Sims 4, The Sims 3 and The Sims 2, detected automatically. |
 | **English or French** | Toggle in the corner, remembered between sessions. |
 
+## Screenshots
+
+<div align="center">
+
+<img src="screenshots/viewer-colours.png" alt="The viewer with an object and its colour strip" width="640" />
+
+*An object in the viewer, with the colour strip anchored at the bottom. Click a
+swatch to repaint the preview.*
+
+<img src="screenshots/viewer-preview.png" alt="The viewer previewing a single-colour object" width="640" />
+
+*A package that ships one colour, shown without the colour strip.*
+
+</div>
+
 ## Install
 
 Grab the latest build from the [releases page](../../releases):

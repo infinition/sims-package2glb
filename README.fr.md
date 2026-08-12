@@ -40,6 +40,21 @@ ouvre sans extension.
 | **Trois jeux** | Les Sims 4, Les Sims 3 et Les Sims 2, detectes automatiquement. |
 | **Anglais ou francais** | Bascule dans le coin, memorisee d'une session a l'autre. |
 
+## Captures d'ecran
+
+<div align="center">
+
+<img src="screenshots/viewer-colours.png" alt="Le visualiseur avec un objet et sa bande de coloris" width="640" />
+
+*Un objet dans le visualiseur, avec la bande de coloris ancree en bas. Cliquez
+sur une vignette pour repeindre l'apercu.*
+
+<img src="screenshots/viewer-preview.png" alt="Le visualiseur affichant un objet a couleur unique" width="640" />
+
+*Un package a couleur unique, affiche sans la bande de coloris.*
+
+</div>
+
 ## Installation
 
 Recuperez la derniere version sur la [page des releases](../../releases) :
