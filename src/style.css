@@ -71,7 +71,9 @@ body {
 }
 
 #brand {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
   padding: 18px 18px 14px;
 }
 
@@ -93,7 +95,9 @@ body {
 }
 
 #actions {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
   display: grid;
   gap: 8px;
   padding: 0 18px 14px;
@@ -356,6 +360,7 @@ button.path {
 #stage {
   position: relative;
   min-width: 0;
+  min-height: 0;
 }
 
 #canvas {
@@ -452,8 +457,9 @@ body.dragging #stage::after {
 
 /* ------------------------------------------------------------- swatches */
 
-/* Anchored to the bottom of the stage and never taller than a slice of it, so
-   a short window shrinks the strip instead of pushing it off screen. */
+/* Anchored to the bottom of the stage and sized to its content. The strip
+   scrolls horizontally, so a narrow or short window never collapses it: the
+   swatches stay visible and give way only in width. */
 #swatches {
   position: absolute;
   left: 50%;
@@ -461,7 +467,7 @@ body.dragging #stage::after {
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100% - 28px);
-  max-height: min(140px, 45%);
+  max-height: 140px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -484,7 +490,7 @@ body.dragging #stage::after {
 #swatch-strip {
   display: flex;
   gap: 6px;
-  min-height: 0;
+  min-height: 44px;
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 2px;
@@ -551,6 +557,10 @@ body.dragging #stage::after {
   .swatch {
     width: 34px;
     height: 34px;
+  }
+
+  #swatch-strip {
+    min-height: 34px;
   }
 
   #swatches .swatch-head {

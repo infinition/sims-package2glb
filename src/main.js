@@ -86,7 +86,8 @@ function renderList() {
     }
     const game = document.createElement("span");
     game.className = "tag";
-    game.textContent = entry.game === "Sims 3" ? "S3" : "S4";
+    game.textContent =
+      entry.game === "Sims 2" ? "S2" : entry.game === "Sims 3" ? "S3" : "S4";
     preview.append(game);
 
     const body = document.createElement("div");
