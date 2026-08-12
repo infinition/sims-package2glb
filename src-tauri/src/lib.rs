@@ -1,6 +1,7 @@
 mod dbpf;
 mod extract;
 mod glb;
+mod gmdc;
 mod rcol;
 mod texture;
 

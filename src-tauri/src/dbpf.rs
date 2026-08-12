@@ -18,6 +18,8 @@ pub const TYPE_MLOD: u32 = 0x01D10F34;
 
 /// The Sims 2 directory of compressed resources.
 pub const TYPE_DIR: u32 = 0xE86B1EEF;
+/// The Sims 2 geometry container.
+pub const TYPE_GMDC: u32 = 0xAC4F8687;
 
 const COMP_NONE: u16 = 0x0000;
 const COMP_ZLIB: u16 = 0x5A42;

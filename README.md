@@ -4,7 +4,7 @@
 
 # sims-package2glb
 
-**Open The Sims 3 and The Sims 4 `.package` mods and get real glTF out of them.**
+**Open The Sims 2, 3 and 4 `.package` mods and get real glTF out of them.**
 
 Mesh, UVs, normals, normal map and texture, embedded in a single `.glb`.
 No Blender, no Python, no Sims 4 Studio. One window, drag and drop.
@@ -36,7 +36,7 @@ plugin.
 | **See it immediately** | Built in Three.js viewer, orbit, wireframe, grid. |
 | **Pick the colour** | Mods ship several recolours. Every one is offered as a thumbnail, and the preview updates on click. |
 | **Export in bulk** | One folder per object. Optionally the raw resources too: textures as readable `.dds` and `.png`, original 3D resources. |
-| **Both games** | The Sims 4 and The Sims 3, detected automatically. |
+| **Three games** | The Sims 4, The Sims 3 and The Sims 2, detected automatically. |
 | **English or French** | Toggle in the corner, remembered between sessions. |
 
 ## Install
@@ -50,6 +50,17 @@ Windows only for now. The whole application is a 4.5 MB executable with no
 runtime to install.
 
 ## Use
+
+**Drop them on the executable** and they are converted where they already sit:
+one folder per object beside the package, raw resources included, no window.
+The same works from a terminal, which reports what it did:
+
+```bash
+sims-package2glb.exe "C:\Mods\my object.package"
+sims-package2glb.exe "C:\Mods"
+```
+
+Or open the window for the viewer and the colour picker:
 
 1. Drag `.package` files, or a folder of them, onto the window.
 2. Click an entry in the list to look at it.
@@ -87,6 +98,7 @@ preview or an export, and arranges the answers.
 | `src-tauri/src/dbpf.rs` | DBPF container, zlib and RefPack decompression |
 | `src-tauri/src/texture.rs` | `DST1`/`DST5` to DXT, block decoding, normal maps |
 | `src-tauri/src/rcol.rs` | RCOL container, `MODL`/`MLOD`, geometry and materials |
+| `src-tauri/src/gmdc.rs` | The Sims 2 geometry container |
 | `src-tauri/src/glb.rs` | glTF 2.0 binary writer |
 | `src-tauri/src/extract.rs` | level of detail choice, recolours, assembly |
 | `src/viewer.js` | Three.js scene |
@@ -146,6 +158,15 @@ the base game material as its default and ships its own textures as extra
 materials. Following the default alone gives an object with no texture at all.
 For Sims 3 the reference cannot be resolved from the package at all, which is
 why the colour picker exists.
+
+**The Sims 2 is a different shape entirely.** Its container is version 1 of
+DBPF, with a fixed index and no compression marker in the entries: a separate
+`DIR` resource lists the compressed keys, and each compressed resource opens
+with its own length before the RefPack stream. Its geometry is not RCOL at all
+but a `GMDC`, a flat array of typed elements tied together by data groups and
+carved into named subsets by index groups. Textures are read from the package,
+but the Sims 2 material to texture binding is not resolved yet, so those models
+export untextured for now.
 
 ## Contributing
 

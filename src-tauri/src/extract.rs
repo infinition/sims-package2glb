@@ -3,8 +3,9 @@
 //! Two jobs live here: describing a package well enough for the interface to
 //! offer its recolours, and assembling a GLB once one has been chosen.
 
-use crate::dbpf::{self, Package, TYPE_MLOD, TYPE_MODL};
+use crate::dbpf::{self, Package, TYPE_GMDC, TYPE_MLOD, TYPE_MODL};
 use crate::glb;
+use crate::gmdc;
 use crate::rcol::{self, Mesh};
 use crate::texture::{self, Image};
 use base64::Engine;
@@ -50,10 +51,11 @@ pub struct Model {
 fn best_models(package: &Package) -> Vec<Model> {
     let mut best: HashMap<u64, (usize, Vec<Mesh>)> = HashMap::new();
     for resource in &package.resources {
-        if resource.kind != TYPE_MODL && resource.kind != TYPE_MLOD {
-            continue;
-        }
-        let meshes = rcol::extract(&resource.data);
+        let meshes = match resource.kind {
+            TYPE_MODL | TYPE_MLOD => rcol::extract(&resource.data),
+            TYPE_GMDC => gmdc::extract(&resource.data),
+            _ => continue,
+        };
         if meshes.is_empty() {
             continue;
         }
@@ -148,9 +150,9 @@ pub fn scan(path: &Path) -> Result<PackageInfo, String> {
         .flat_map(|m| &m.meshes)
         .any(|m| m.normal.map(|n| images.contains_key(&n)).unwrap_or(false));
 
-    let warning = if meshes == 0 && package.sims2 {
-        // The Sims 2 container is understood, its GMDC geometry is not yet.
-        Some("sims2_no_geometry")
+    let warning = if meshes > 0 && package.sims2 && swatches.is_empty() {
+        // The Sims 2 keeps its textures in its own container, still unread.
+        Some("sims2_no_texture")
     } else if meshes == 0 {
         Some("no_mesh")
     } else if guessed && !swatches.is_empty() {
@@ -347,19 +349,25 @@ mod tests {
         for entry in list.split('|').filter(|s| !s.is_empty()) {
             let path = Path::new(entry);
             let info = scan(path).expect("scan");
-            let built = build(path, None).expect("build");
-            println!(
-                "{} [{}] {} maillages, {} triangles, {} textures, {} normales, {} coloris",
-                info.name,
-                info.game,
-                built.meshes,
-                built.triangles,
-                built.textures,
-                built.normal_maps,
-                info.swatches.len()
-            );
-            let target = Path::new(&out).join(format!("{}.glb", info.name));
-            std::fs::write(target, built.bytes).expect("write");
+            match build(path, None) {
+                Ok(built) => {
+                    println!(
+                        "{} [{}] {} meshes, {} triangles, {} textures, {} normal maps, {} colours",
+                        info.name,
+                        info.game,
+                        built.meshes,
+                        built.triangles,
+                        built.textures,
+                        built.normal_maps,
+                        info.swatches.len()
+                    );
+                    let target = Path::new(&out).join(format!("{}.glb", info.name));
+                    std::fs::write(target, built.bytes).expect("write");
+                }
+                // A recolour package carries textures and no geometry at all,
+                // which is a normal thing for a package to be.
+                Err(reason) => println!("{} [{}] skipped: {reason}", info.name, info.game),
+            }
         }
     }
 }

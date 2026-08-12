@@ -4,7 +4,7 @@
 
 # sims-package2glb
 
-**Ouvrez les mods `.package` des Sims 3 et des Sims 4 et recuperez du vrai glTF.**
+**Ouvrez les mods `.package` des Sims 2, 3 et 4 et recuperez du vrai glTF.**
 
 Maillage, UV, normales, carte de normales et texture, embarques dans un seul
 `.glb`. Ni Blender, ni Python, ni Sims 4 Studio. Une fenetre, un glisser-deposer.
@@ -37,7 +37,7 @@ ouvre sans extension.
 | **Voyez tout de suite** | Visualiseur Three.js integre, orbite, fil de fer, grille. |
 | **Choisissez le coloris** | Les mods livrent plusieurs variantes. Chacune est proposee en vignette, et l'apercu se met a jour au clic. |
 | **Exportez en lot** | Un dossier par objet. Au choix, les ressources brutes aussi : textures en `.dds` lisible et `.png`, ressources 3D d'origine. |
-| **Les deux jeux** | Les Sims 4 et Les Sims 3, detectes automatiquement. |
+| **Trois jeux** | Les Sims 4, Les Sims 3 et Les Sims 2, detectes automatiquement. |
 | **Anglais ou francais** | Bascule dans le coin, memorisee d'une session a l'autre. |
 
 ## Installation
@@ -51,6 +51,17 @@ Windows uniquement pour l'instant. L'application entiere tient dans un
 executable de 4,5 Mo, sans aucun environnement d'execution a installer.
 
 ## Utilisation
+
+**Deposez-les sur l'executable** et ils sont convertis la ou ils se trouvent :
+un dossier par objet a cote du package, ressources brutes comprises, sans
+ouvrir de fenetre. Cela marche aussi depuis un terminal, qui rend compte :
+
+```bash
+sims-package2glb.exe "C:\Mods\mon objet.package"
+sims-package2glb.exe "C:\Mods"
+```
+
+Ou ouvrez la fenetre pour le visualiseur et le selecteur de coloris :
 
 1. Glissez des `.package`, ou un dossier qui en contient, sur la fenetre.
 2. Cliquez sur une entree de la liste pour la regarder.
@@ -89,6 +100,7 @@ reponses.
 | `src-tauri/src/dbpf.rs` | conteneur DBPF, decompression zlib et RefPack |
 | `src-tauri/src/texture.rs` | `DST1`/`DST5` vers DXT, decodage, cartes de normales |
 | `src-tauri/src/rcol.rs` | conteneur RCOL, `MODL`/`MLOD`, geometrie et materiaux |
+| `src-tauri/src/gmdc.rs` | conteneur de geometrie des Sims 2 |
 | `src-tauri/src/glb.rs` | ecriture glTF 2.0 binaire |
 | `src-tauri/src/extract.rs` | choix du niveau de detail, coloris, assemblage |
 | `src/viewer.js` | scene Three.js |
@@ -152,6 +164,16 @@ garde le materiau du jeu de base comme materiau par defaut et livre ses propres
 textures comme materiaux supplementaires. Suivre le seul defaut donne un objet
 sans aucune texture. En Sims 3, la reference n'est pas resoluble depuis le
 package : c'est la raison d'etre du selecteur de coloris.
+
+**Les Sims 2 sont d'une tout autre forme.** Leur conteneur est la version 1 de
+DBPF : index a place fixe et aucune marque de compression dans les entrees,
+c'est une ressource `DIR` a part qui liste les cles compressees, et chaque
+ressource compressee commence par sa propre longueur avant le flux RefPack.
+Leur geometrie n'est pas du RCOL mais un `GMDC`, un tableau plat d'elements
+types relies par des groupes de donnees et decoupes en sous-ensembles nommes
+par des groupes d'indices. Les textures sont lues, mais la liaison materiau
+vers texture des Sims 2 n'est pas encore resolue : ces modeles sortent donc
+sans texture pour l'instant.
 
 ## Contribuer
 

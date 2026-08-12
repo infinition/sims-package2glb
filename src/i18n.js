@@ -10,7 +10,7 @@
 
 const DICTIONARY = {
   en: {
-    "app.tagline": "Sims 3 and Sims 4 objects to glTF",
+    "app.tagline": "Sims 2, 3 and 4 objects to glTF",
     "action.files": "Import packages",
     "action.folder": "Import a folder",
     "action.export": "Export",
@@ -31,7 +31,7 @@ const DICTIONARY = {
     "status.notexportable": "no package can be exported",
     "swatch.pick": "{n} textures, pick one",
     "warn.no_mesh": "no usable mesh in this package",
-    "warn.sims2_no_geometry": "Sims 2: textures extract, geometry not supported yet",
+    "warn.sims2_no_texture": "Sims 2: geometry only, material binding not resolved yet",
     "warn.external_materials": "materials point outside the package, choose a colour by hand",
     "error.no_mesh": "no usable mesh (MODL/MLOD)",
     "error.not_dbpf": "this file is not a DBPF package",
@@ -52,7 +52,7 @@ const DICTIONARY = {
     "status.loaded": "{n} loaded",
   },
   fr: {
-    "app.tagline": "Objets Sims 3 et Sims 4 vers glTF",
+    "app.tagline": "Objets Sims 2, 3 et 4 vers glTF",
     "action.files": "Importer des packages",
     "action.folder": "Importer un dossier",
     "action.export": "Exporter",
@@ -73,7 +73,7 @@ const DICTIONARY = {
     "status.notexportable": "aucun package exportable",
     "swatch.pick": "{n} textures, a choisir",
     "warn.no_mesh": "aucun maillage exploitable dans ce package",
-    "warn.sims2_no_geometry": "Sims 2 : les textures sortent, la geometrie n'est pas encore geree",
+    "warn.sims2_no_texture": "Sims 2 : geometrie seule, liaison des materiaux pas encore resolue",
     "warn.external_materials": "les materiaux pointent hors du package, coloris a choisir a la main",
     "error.no_mesh": "aucun maillage exploitable (MODL/MLOD)",
     "error.not_dbpf": "ce fichier n'est pas un package DBPF",
