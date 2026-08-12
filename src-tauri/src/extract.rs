@@ -77,8 +77,13 @@ fn best_models(package: &Package) -> Vec<Model> {
 
 fn decoded_images(package: &Package) -> HashMap<u64, Image> {
     let mut out = HashMap::new();
-    for resource in package.images() {
-        if let Ok(image) = texture::decode(&resource.data) {
+    for resource in package.textures() {
+        let decoded = if resource.kind == dbpf::TYPE_TXTR {
+            texture::decode_sims2(&resource.data)
+        } else {
+            texture::decode(&resource.data)
+        };
+        if let Ok(image) = decoded {
             out.insert(resource.instance, image);
         }
     }
@@ -298,6 +303,7 @@ pub fn dump_resources(path: &Path, into: &Path) -> Result<(usize, usize), String
     for resource in &package.resources {
         let magic = resource.data.get(..4).unwrap_or(&[]);
         let (folder, extension) = match (resource.kind, magic) {
+            (dbpf::TYPE_TXTR, _) => ("1_Textures", "dds"),
             (_, b"DDS ") => ("1_Textures", "dds"),
             (_, [0xFF, 0xD8, 0xFF, _]) => ("1_Textures", "jpg"),
             (_, [0x89, b'P', b'N', b'G']) => ("1_Textures", "png"),
@@ -311,7 +317,9 @@ pub fn dump_resources(path: &Path, into: &Path) -> Result<(usize, usize), String
         );
         let target = into.join(folder).join(format!("{base}.{extension}"));
 
-        let payload = if extension == "dds" {
+        let payload = if resource.kind == dbpf::TYPE_TXTR {
+            texture::sims2_dds(&resource.data).unwrap_or_else(|_| resource.data.clone())
+        } else if extension == "dds" {
             texture::unshuffle(&resource.data)
         } else {
             resource.data.clone()
@@ -320,7 +328,12 @@ pub fn dump_resources(path: &Path, into: &Path) -> Result<(usize, usize), String
             written += 1;
         }
         if extension == "dds" {
-            if let Ok(image) = texture::decode(&resource.data) {
+            let decoded = if resource.kind == dbpf::TYPE_TXTR {
+                texture::decode_sims2(&resource.data)
+            } else {
+                texture::decode(&resource.data)
+            };
+            if let Ok(image) = decoded {
                 if let Ok(png) = texture::to_png(&image, true) {
                     let preview = into.join(folder).join(format!("{base}.png"));
                     if std::fs::write(preview, png).is_ok() {

@@ -1,9 +1,16 @@
 //! Sims textures: DDS containers holding block-compressed pixels.
 //!
+//! The Sims 2 keeps its images in a different container, `cImageData`, inside a
+//! TXTR resource. It is not a DDS at all: a small object header naming the
+//! image, then the mipmaps smallest to largest, each preceded by its size. The
+//! largest mip is wrapped back into a DDS here so the block decoder is shared.
+//!
 //! Sims 3 stores ordinary DXT1/DXT5. Sims 4 stores the same blocks with their
 //! fields split into planes -- the `DST1`/`DST5` four-character codes -- which
 //! compresses far better but is not a DDS any tool will open. Undoing that
 //! split is the only thing standing between the file and a normal texture.
+
+use crate::dbpf::TYPE_TXTR;
 
 pub struct Image {
     pub width: u32,
@@ -96,6 +103,99 @@ fn rgb565(value: u16) -> [u8; 3] {
     ]
 }
 
+/// Rebuild a DDS around the largest mip of a Sims 2 `cImageData` texture.
+///
+/// The header walk follows the field order found in real files and confirmed
+/// against the reference: class name, the embedded `cSGResource` with its two
+/// fields and file name, then width, height, format and mip count, then a
+/// repeated file name, then the mipmap list. Each mip is a type byte, a size
+/// and the pixels; mipmaps run smallest to largest, so the last one is kept.
+pub fn sims2_dds(data: &[u8]) -> Result<Vec<u8>, String> {
+    let word = |data: &[u8], at: usize| -> Result<u32, String> {
+        let slice = data.get(at..at + 4).ok_or("s2_bad_header")?;
+        Ok(u32::from_le_bytes([slice[0], slice[1], slice[2], slice[3]]))
+    };
+    let str_end = |data: &[u8], at: usize| -> Result<usize, String> {
+        let length = *data.get(at).ok_or("s2_bad_header")? as usize;
+        let end = at + 1 + length;
+        if end > data.len() {
+            return Err("s2_bad_header".into());
+        }
+        Ok(end)
+    };
+
+    if word(data, 0x0C)? != TYPE_TXTR {
+        return Err("s2_not_txtr".into());
+    }
+    let mut at = 0x10;
+    at = str_end(data, at)?; // cImageData
+    at += 8; // block id and version
+    at = str_end(data, at)?; // cSGResource
+    at += 8; // its two leading fields
+    at = str_end(data, at)?; // the resource file name
+    let width = word(data, at)?;
+    let height = word(data, at + 4)?;
+    let format = word(data, at + 8)?;
+    at += 16;
+    at += 12; // purpose, outer loop, unknown
+    at = str_end(data, at)?; // repeated file name, present from version 9
+    let images = word(data, at)? as usize;
+    at += 4;
+
+    // Mipmaps are stored smallest to largest; the last one is the base level.
+    let mut mip0: Option<(usize, usize)> = None;
+    for _ in 0..images {
+        let kind = *data.get(at).ok_or("s2_bad_header")?;
+        at += 1;
+        if kind == 0 {
+            let size = word(data, at)? as usize;
+            at += 4;
+            if at + size > data.len() {
+                return Err("s2_bad_header".into());
+            }
+            mip0 = Some((at, size));
+            at += size;
+        } else {
+            at = str_end(data, at)?; // named reference, skip it
+        }
+    }
+    let (offset, size) = mip0.ok_or("s2_no_image")?;
+
+    let fourcc = match format {
+        4 => b"DXT1",
+        5 => b"DXT3",
+        8 => b"DXT5",
+        other => return Err(format!("unsupported_format:{other}")),
+    };
+    let mut dds = dds_header(width, height, fourcc, size as u32);
+    dds.extend_from_slice(&data[offset..offset + size]);
+    Ok(dds)
+}
+
+/// Decode a Sims 2 `cImageData` texture to RGBA8.
+pub fn decode_sims2(data: &[u8]) -> Result<Image, String> {
+    decode(&sims2_dds(data)?)
+}
+
+/// A minimal DDS header, fourcc and one mip level, for the block decoder and
+/// for the files written out on export.
+fn dds_header(width: u32, height: u32, fourcc: &[u8; 4], linear_size: u32) -> Vec<u8> {
+    let mut dds = vec![0u8; 128];
+    dds[..4].copy_from_slice(b"DDS ");
+    dds[4..8].copy_from_slice(&124u32.to_le_bytes());
+    // CAPS, HEIGHT, WIDTH, PIXELFORMAT, MIPMAPCOUNT, LINEARSIZE.
+    dds[8..12].copy_from_slice(&0xA1007u32.to_le_bytes());
+    dds[12..16].copy_from_slice(&height.to_le_bytes());
+    dds[16..20].copy_from_slice(&width.to_le_bytes());
+    dds[20..24].copy_from_slice(&linear_size.to_le_bytes());
+    dds[28..32].copy_from_slice(&1u32.to_le_bytes());
+    dds[76..80].copy_from_slice(&32u32.to_le_bytes());
+    dds[80..84].copy_from_slice(&4u32.to_le_bytes());
+    dds[84..88].copy_from_slice(fourcc);
+    dds[108..112].copy_from_slice(&0x1000u32.to_le_bytes());
+    dds
+}
+
 /// Decode mip level 0 of a DXT1/DXT5 DDS to RGBA8.
 pub fn decode(dds: &[u8]) -> Result<Image, String> {
     let dds = unshuffle(dds);
@@ -107,9 +207,10 @@ pub fn decode(dds: &[u8]) -> Result<Image, String> {
     if width == 0 || height == 0 || width > 8192 || height > 8192 {
         return Err("bad_texture_size".into());
     }
-    let dxt5 = match &dds[84..88] {
-        b"DXT5" | b"DXT4" => true,
-        b"DXT1" => false,
+    let (dxt1, dxt3, dxt5) = match &dds[84..88] {
+        b"DXT1" => (true, false, false),
+        b"DXT3" => (false, true, false),
+        b"DXT5" | b"DXT4" => (false, false, true),
         other => {
             return Err(format!(
                 "unsupported_format:{}",
@@ -118,7 +219,7 @@ pub fn decode(dds: &[u8]) -> Result<Image, String> {
         }
     };
 
-    let stride = if dxt5 { 16 } else { 8 };
+    let stride = if dxt1 { 8 } else { 16 };
     let body = &dds[128..];
     let (bw, bh) = (width.div_ceil(4), height.div_ceil(4));
     let mut pixels = vec![0u8; (width * height * 4) as usize];
@@ -132,7 +233,9 @@ pub fn decode(dds: &[u8]) -> Result<Image, String> {
             let block = &body[at..at + stride];
 
             let mut alpha = [255u8; 16];
-            let colour_at = if dxt5 {
+            let colour_at = if dxt1 {
+                0
+            } else if dxt5 {
                 let (a0, a1) = (block[0], block[1]);
                 let mut table = [0u8; 8];
                 table[0] = a0;
@@ -158,6 +261,14 @@ pub fn decode(dds: &[u8]) -> Result<Image, String> {
                     *slot = table[((bits >> (3 * i)) & 0x7) as usize];
                 }
                 8
+            } else if dxt3 {
+                // DXT3 stores its alpha as four raw bits per pixel, no
+                // endpoints to interpolate.
+                for (i, slot) in alpha.iter_mut().enumerate() {
+                    *slot = (block[i / 2] >> (4 * (i % 2))) & 0x0F;
+                    *slot *= 17;
+                }
+                8
             } else {
                 0
             };
@@ -169,7 +280,8 @@ pub fn decode(dds: &[u8]) -> Result<Image, String> {
             palette[0] = p0;
             palette[1] = p1;
             // DXT1 keeps one bit of transparency by ordering its endpoints.
-            let punch_through = !dxt5 && c0 <= c1;
+            // DXT3 and DXT5 carry explicit alpha, so this never applies to them.
+            let punch_through = dxt1 && c0 <= c1;
             for k in 0..3 {
                 if punch_through {
                     palette[2][k] = ((p0[k] as u16 + p1[k] as u16) / 2) as u8;

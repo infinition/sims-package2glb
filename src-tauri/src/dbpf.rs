@@ -20,6 +20,8 @@ pub const TYPE_MLOD: u32 = 0x01D10F34;
 pub const TYPE_DIR: u32 = 0xE86B1EEF;
 /// The Sims 2 geometry container.
 pub const TYPE_GMDC: u32 = 0xAC4F8687;
+/// The Sims 2 texture container, holding a `cImageData` object.
+pub const TYPE_TXTR: u32 = 0x1C4A276C;
 
 const COMP_NONE: u16 = 0x0000;
 const COMP_ZLIB: u16 = 0x5A42;
@@ -51,8 +53,12 @@ impl Package {
         }
     }
 
-    pub fn images(&self) -> impl Iterator<Item = &Resource> {
-        self.resources.iter().filter(|r| r.kind == TYPE_IMG)
+    /// Every texture resource, whichever of the two containers a game uses:
+    /// the Sims 3/4 image type, or the Sims 2 texture type.
+    pub fn textures(&self) -> impl Iterator<Item = &Resource> {
+        self.resources
+            .iter()
+            .filter(|r| r.kind == TYPE_IMG || r.kind == TYPE_TXTR)
     }
 }
 

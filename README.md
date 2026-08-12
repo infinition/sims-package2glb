@@ -96,7 +96,7 @@ preview or an export, and arranges the answers.
 | file | role |
 |------|------|
 | `src-tauri/src/dbpf.rs` | DBPF container, zlib and RefPack decompression |
-| `src-tauri/src/texture.rs` | `DST1`/`DST5` to DXT, block decoding, normal maps |
+| `src-tauri/src/texture.rs` | `DST1`/`DST5` to DXT, the Sims 2 `cImageData`, block decoding, normal maps |
 | `src-tauri/src/rcol.rs` | RCOL container, `MODL`/`MLOD`, geometry and materials |
 | `src-tauri/src/gmdc.rs` | The Sims 2 geometry container |
 | `src-tauri/src/glb.rs` | glTF 2.0 binary writer |
@@ -164,9 +164,11 @@ DBPF, with a fixed index and no compression marker in the entries: a separate
 `DIR` resource lists the compressed keys, and each compressed resource opens
 with its own length before the RefPack stream. Its geometry is not RCOL at all
 but a `GMDC`, a flat array of typed elements tied together by data groups and
-carved into named subsets by index groups. Textures are read from the package,
-but the Sims 2 material to texture binding is not resolved yet, so those models
-export untextured for now.
+carved into named subsets by index groups. Textures live in `cImageData`
+containers: an object header naming the image and its size, then the mipmaps
+smallest to largest, each preceded by its size. The largest mip is wrapped back
+into a DDS to decode. The mesh does not name its texture, so the binding is
+offered by hand, as in Sims 3.
 
 ## Contributing
 

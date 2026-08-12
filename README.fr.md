@@ -98,7 +98,7 @@ reponses.
 | fichier | role |
 |---------|------|
 | `src-tauri/src/dbpf.rs` | conteneur DBPF, decompression zlib et RefPack |
-| `src-tauri/src/texture.rs` | `DST1`/`DST5` vers DXT, decodage, cartes de normales |
+| `src-tauri/src/texture.rs` | `DST1`/`DST5` vers DXT, `cImageData` des Sims 2, decodage, cartes de normales |
 | `src-tauri/src/rcol.rs` | conteneur RCOL, `MODL`/`MLOD`, geometrie et materiaux |
 | `src-tauri/src/gmdc.rs` | conteneur de geometrie des Sims 2 |
 | `src-tauri/src/glb.rs` | ecriture glTF 2.0 binaire |
@@ -171,9 +171,11 @@ c'est une ressource `DIR` a part qui liste les cles compressees, et chaque
 ressource compressee commence par sa propre longueur avant le flux RefPack.
 Leur geometrie n'est pas du RCOL mais un `GMDC`, un tableau plat d'elements
 types relies par des groupes de donnees et decoupes en sous-ensembles nommes
-par des groupes d'indices. Les textures sont lues, mais la liaison materiau
-vers texture des Sims 2 n'est pas encore resolue : ces modeles sortent donc
-sans texture pour l'instant.
+par des groupes d'indices. Les textures vivent dans des conteneurs
+`cImageData` : un en-tete objet nommant l'image et ses dimensions, puis les
+mipmaps du plus petit au plus grand, chacune precedee de sa taille. Le plus
+grand mip est reemballe en DDS pour etre decode. Le maillage ne nomme pas sa
+texture, la liaison est donc proposee a la main, comme en Sims 3.
 
 ## Contribuer
 
