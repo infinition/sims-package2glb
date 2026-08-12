@@ -19,6 +19,8 @@ Maillage, UV, normales, carte de normales et texture, embarques dans un seul
 
 ---
 
+Vous jouez a *Paralives* ? [**ParaForge**](https://github.com/infinition/paraforge) emmene vos modeles Blender dans le jeu, pret a poser.
+
 ## Ce que fait l'outil
 
 Un fichier `.package` est un conteneur. A l'interieur se trouvent le modele, ses

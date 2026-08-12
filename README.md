@@ -19,6 +19,8 @@ No Blender, no Python, no Sims 4 Studio. One window, drag and drop.
 
 ---
 
+Playing *Paralives*? [**ParaForge**](https://github.com/infinition/paraforge) brings Blender models into the game, ready to place.
+
 ## What it does
 
 A `.package` file is a container. Inside it sit the model, its levels of detail,
