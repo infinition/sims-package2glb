@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sims-package2glb</title>
+  </head>
+  <body>
+    <div id="app">
+      <aside id="panel">
+        <header id="brand">
+          <div class="brand-row">
+            <h1>sims<span>-package2glb</span></h1>
+            <div id="lang" role="group" aria-label="Language">
+              <button data-lang="en">EN</button>
+              <button data-lang="fr">FR</button>
+            </div>
+          </div>
+          <p data-i18n="app.tagline"></p>
+        </header>
+
+        <div id="actions">
+          <button id="pick-files" class="primary" data-i18n="action.files"></button>
+          <button id="pick-folder" data-i18n="action.folder"></button>
+        </div>
+
+        <div id="list" role="list"></div>
+
+        <footer id="footer">
+          <label class="check">
+            <input type="checkbox" id="with-resources" />
+            <span data-i18n="action.resources"></span>
+          </label>
+          <div id="destination" hidden>
+            <span class="label" data-i18n="action.destination"></span>
+            <button id="pick-destination" class="path"></button>
+          </div>
+          <button id="export-all" class="primary" data-i18n="action.export" disabled></button>
+          <p id="status"></p>
+        </footer>
+      </aside>
+
+      <main id="stage">
+        <canvas id="canvas"></canvas>
+
+        <div id="drop-hint">
+          <div class="card">
+            <h2 data-i18n="drop.title"></h2>
+            <p data-i18n="drop.hint"></p>
+          </div>
+        </div>
+
+        <div id="hud" hidden>
+          <div id="hud-title"></div>
+          <div id="hud-meta"></div>
+        </div>
+
+        <div id="swatches" hidden>
+          <div class="swatch-head">
+            <span data-i18n="swatch.title"></span>
+            <span id="swatch-count"></span>
+          </div>
+          <div id="swatch-strip"></div>
+        </div>
+
+        <div id="viewer-tools" hidden>
+          <button data-tool="reset" data-i18n="tool.reset"></button>
+          <button data-tool="wire" data-i18n="tool.wire"></button>
+          <button data-tool="grid" data-i18n="tool.grid"></button>
+        </div>
+
+        <div id="busy" hidden><span></span></div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

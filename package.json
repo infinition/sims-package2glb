@@ -1,0 +1,24 @@
+{
+  "name": "sims-package2glb",
+  "version": "0.1.0",
+  "description": "Extract Sims 3 / Sims 4 .package objects to glTF",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "vite": "^6"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}
