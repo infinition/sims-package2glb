@@ -1,0 +1,63 @@
+name: Release
+
+# Tag a version and this publishes the installer and the portable executable.
+# The tag is the source of truth for the version number that ships.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build and publish, for example v0.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # The Rust build is the long pole; cache it across runs.
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run tauri build
+
+      # The portable copy is the same binary the installer carries, renamed so
+      # people can tell the two downloads apart at a glance.
+      - name: Collect artefacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item src-tauri/target/release/bundle/nsis/*-setup.exe release/
+          Copy-Item src-tauri/target/release/sims-package2glb.exe release/sims-package2glb-portable.exe
+          Get-ChildItem release
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          draft: false
+          generate_release_notes: true
+          files: |
+            release/*-setup.exe
+            release/sims-package2glb-portable.exe
