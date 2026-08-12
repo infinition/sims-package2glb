@@ -1,6 +1,6 @@
 {
   "name": "sims-package2glb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Extract Sims 3 / Sims 4 .package objects to glTF",
   "type": "module",
   "scripts": {
